@@ -191,6 +191,61 @@ export const sessions = sqliteTable("sessions", {
 });
 
 /**
+ * Users table — registered application users.
+ *
+ * Stores user accounts with email/password credentials.
+ * The passwordHash field stores bcrypt-hashed passwords.
+ * Used by NextAuth.js for authentication.
+ */
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  email: text("email").notNull().unique(),
+  emailVerified: text("email_verified"),
+  passwordHash: text("password_hash"),
+  image: text("image"),
+  displayCurrency: text("display_currency").default("USD"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+/**
+ * OAuth accounts table — linked OAuth provider accounts.
+ *
+ * Stores OAuth tokens and metadata for providers like Google, Discord.
+ * Each account is linked to a user via userId.
+ */
+export const accounts = sqliteTable("accounts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
+  refreshToken: text("refresh_token"),
+  accessToken: text("access_token"),
+  expiresAt: integer("expires_at"),
+  tokenType: text("token_type"),
+  scope: text("scope"),
+  idToken: text("id_token"),
+});
+
+/**
+ * Auth sessions table — database-backed session storage.
+ *
+ * Used by NextAuth.js when database session strategy is enabled.
+ * Each session maps a session token to a user.
+ */
+export const authSessions = sqliteTable("auth_sessions", {
+  id: text("id").primaryKey(),
+  sessionToken: text("session_token").notNull().unique(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expires: text("expires").notNull(),
+});
+
+/**
  * Imports table — audit log of data imports.
  *
  * Every import operation (WPT, GGPoker, CSV) is logged here

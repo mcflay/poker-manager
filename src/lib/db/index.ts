@@ -142,6 +142,39 @@ sqlite.exec(`
     imported_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Auth tables for NextAuth.js
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    name TEXT,
+    email TEXT NOT NULL UNIQUE,
+    email_verified TEXT,
+    password_hash TEXT,
+    image TEXT,
+    display_currency TEXT DEFAULT 'USD',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS accounts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    provider_account_id TEXT NOT NULL,
+    refresh_token TEXT,
+    access_token TEXT,
+    expires_at INTEGER,
+    token_type TEXT,
+    scope TEXT,
+    id_token TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS auth_sessions (
+    id TEXT PRIMARY KEY,
+    session_token TEXT NOT NULL UNIQUE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires TEXT NOT NULL
+  );
+
   -- Seed default poker sites (idempotent via INSERT OR IGNORE)
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('wptglobal', 'WPT Global', 'USD');
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('pokerstars', 'PokerStars', 'USD');
@@ -150,3 +183,22 @@ sqlite.exec(`
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('winamax', 'Winamax', 'EUR');
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('acr', 'ACR', 'USD');
 `);
+
+/**
+ * Add user_id columns to existing tables for multi-user support.
+ * Uses try-catch because ALTER TABLE ADD COLUMN fails if column already exists.
+ */
+const alterStatements = [
+  "ALTER TABLE favorites ADD COLUMN user_id TEXT",
+  "ALTER TABLE filter_profiles ADD COLUMN user_id TEXT",
+  "ALTER TABLE results ADD COLUMN user_id TEXT",
+  "ALTER TABLE sessions ADD COLUMN user_id TEXT",
+];
+
+for (const stmt of alterStatements) {
+  try {
+    sqlite.exec(stmt);
+  } catch {
+    // Column already exists — ignore
+  }
+}

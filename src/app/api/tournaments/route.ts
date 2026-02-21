@@ -9,14 +9,19 @@
  * Uses raw SQL (via better-sqlite3) for the dynamic WHERE clause since
  * Drizzle ORM's query builder doesn't support this pattern cleanly.
  * Results are joined with sites, results, and favorites tables.
+ * Favorites join is scoped to the current authenticated user.
  *
  * @endpoint GET /api/tournaments
  * @returns {{ tournaments: Tournament[], total: number }}
  */
 import { NextRequest, NextResponse } from "next/server";
-import { db, sqlite } from "@/lib/db";
+import { sqlite } from "@/lib/db";
+import { auth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  const userId = session?.user?.id;
+
   const { searchParams } = new URL(req.url);
   const sites = searchParams.getAll("site");
   const buyInMin = searchParams.get("buyInMin");
@@ -32,6 +37,11 @@ export async function GET(req: NextRequest) {
   const timeWindowHours = searchParams.get("timeWindowHours");
   const favoritesOnly = searchParams.get("favoritesOnly") === "true";
 
+  // Scope favorites join to the current user (or anonymous with NULL user_id)
+  const favJoinCondition = userId
+    ? "f.tournament_id = t.id AND f.user_id = ?"
+    : "f.tournament_id = t.id AND f.user_id IS NULL";
+
   let query = `
     SELECT
       t.*,
@@ -41,10 +51,15 @@ export async function GET(req: NextRequest) {
     FROM tournaments t
     LEFT JOIN sites s ON t.site_id = s.id
     LEFT JOIN results r ON r.tournament_id = t.id
-    LEFT JOIN favorites f ON f.tournament_id = t.id
+    LEFT JOIN favorites f ON ${favJoinCondition}
     WHERE 1=1
   `;
   const params: (string | number)[] = [];
+
+  // Add user_id param for the favorites join when authenticated
+  if (userId) {
+    params.push(userId);
+  }
 
   if (sites.length > 0) {
     query += ` AND t.site_id IN (${sites.map(() => "?").join(",")})`;
