@@ -38,6 +38,7 @@ import {
   CalendarDays,
   BarChart3,
   Wallet,
+  Handshake,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -216,6 +217,13 @@ export default function SchedulePage() {
           >
             <Wallet className="h-3.5 w-3.5" />
             Bankroll
+          </Link>
+          <Link
+            href="/staking"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <Handshake className="h-3.5 w-3.5" />
+            Staking
           </Link>
 
           {/* Search */}

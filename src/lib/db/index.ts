@@ -241,6 +241,35 @@ sqlite.exec(`
   INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('gbp-usd', 'GBP', 'USD', 1.27, 'seed');
   INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('gbp-eur', 'GBP', 'EUR', 1.17, 'seed');
 
+  -- Staking tables
+  CREATE TABLE IF NOT EXISTS staking_deals (
+    id TEXT PRIMARY KEY,
+    player_id TEXT,
+    staker_name TEXT NOT NULL,
+    result_id TEXT,
+    tournament_id TEXT,
+    percentage_sold REAL NOT NULL,
+    markup REAL DEFAULT 1.0,
+    buy_in_amount REAL NOT NULL,
+    staker_investment REAL,
+    staker_payout REAL,
+    player_net_after_staking REAL,
+    status TEXT DEFAULT 'pending',
+    notes TEXT,
+    settled_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS staking_packages (
+    id TEXT PRIMARY KEY,
+    player_id TEXT,
+    name TEXT NOT NULL,
+    total_percentage_sold REAL DEFAULT 0,
+    markup REAL DEFAULT 1.0,
+    status TEXT DEFAULT 'active',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
   -- Seed default poker sites (idempotent via INSERT OR IGNORE)
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('wptglobal', 'WPT Global', 'USD');
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('pokerstars', 'PokerStars', 'USD');
