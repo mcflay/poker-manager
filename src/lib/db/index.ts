@@ -222,6 +222,25 @@ sqlite.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Exchange rates for multi-currency support
+  CREATE TABLE IF NOT EXISTS exchange_rates (
+    id TEXT PRIMARY KEY,
+    base_currency TEXT NOT NULL,
+    target_currency TEXT NOT NULL,
+    rate REAL NOT NULL,
+    source TEXT DEFAULT 'manual',
+    fetched_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(base_currency, target_currency)
+  );
+
+  -- Seed default exchange rates (approximate, user can update)
+  INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('usd-eur', 'USD', 'EUR', 0.92, 'seed');
+  INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('usd-gbp', 'USD', 'GBP', 0.79, 'seed');
+  INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('eur-usd', 'EUR', 'USD', 1.09, 'seed');
+  INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('eur-gbp', 'EUR', 'GBP', 0.86, 'seed');
+  INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('gbp-usd', 'GBP', 'USD', 1.27, 'seed');
+  INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('gbp-eur', 'GBP', 'EUR', 1.17, 'seed');
+
   -- Seed default poker sites (idempotent via INSERT OR IGNORE)
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('wptglobal', 'WPT Global', 'USD');
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('pokerstars', 'PokerStars', 'USD');
