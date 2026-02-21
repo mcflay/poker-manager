@@ -175,6 +175,29 @@ sqlite.exec(`
     expires TEXT NOT NULL
   );
 
+  -- Bankroll management tables
+  CREATE TABLE IF NOT EXISTS bankroll_accounts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    site_id TEXT REFERENCES sites(id),
+    name TEXT NOT NULL,
+    currency TEXT DEFAULT 'USD',
+    current_balance REAL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS bankroll_transactions (
+    id TEXT PRIMARY KEY,
+    account_id TEXT NOT NULL REFERENCES bankroll_accounts(id) ON DELETE CASCADE,
+    user_id TEXT,
+    type TEXT NOT NULL,
+    amount REAL NOT NULL,
+    balance_after REAL NOT NULL,
+    related_result_id TEXT,
+    description TEXT,
+    transacted_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
   -- Seed default poker sites (idempotent via INSERT OR IGNORE)
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('wptglobal', 'WPT Global', 'USD');
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('pokerstars', 'PokerStars', 'USD');

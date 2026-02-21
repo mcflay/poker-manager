@@ -36,6 +36,7 @@ import {
   Trophy,
   CalendarDays,
   BarChart3,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -207,6 +208,13 @@ export default function SchedulePage() {
           >
             <BarChart3 className="h-3.5 w-3.5" />
             Analytics
+          </Link>
+          <Link
+            href="/bankroll"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <Wallet className="h-3.5 w-3.5" />
+            Bankroll
           </Link>
 
           {/* Search */}
