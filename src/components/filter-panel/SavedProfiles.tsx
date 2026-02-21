@@ -9,7 +9,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAppStore } from "@/stores/app-store";
+import { useFilters, useSetFilters } from "@/stores/app-store";
 import { FilterProfile, FilterState } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,8 @@ import { Save, Trash2, Loader2, BookmarkPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export function SavedProfiles() {
-  const { filters, setFilters } = useAppStore();
+  const filters = useFilters();
+  const setFilters = useSetFilters();
   const [profiles, setProfiles] = useState<FilterProfile[]>([]);
   const [showSave, setShowSave] = useState(false);
   const [saveName, setSaveName] = useState("");

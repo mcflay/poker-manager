@@ -19,7 +19,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useAppStore } from "@/stores/app-store";
+import { useSetLastImport } from "@/stores/app-store";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,7 @@ export function ImportButton({ onImported }: { onImported: () => void }) {
   const [summary, setSummary] = useState<ImportSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const { setLastImport } = useAppStore();
+  const setLastImport = useSetLastImport();
 
   const handleFile = async (file: File) => {
     setLoading(true);

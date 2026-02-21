@@ -7,6 +7,9 @@
  * - Favorite tournament IDs (optimistic updates)
  * - Last import timestamp (triggers data refresh)
  *
+ * Individual selectors are exported so components subscribe only to
+ * the slices they need, preventing unnecessary re-renders.
+ *
  * @module stores/app-store
  */
 
@@ -62,3 +65,21 @@ export const useAppStore = create<AppStore>((set) => ({
   lastImport: null,
   setLastImport: (ts) => set({ lastImport: ts }),
 }));
+
+// ── Individual selectors ──────────────────────────────────────────
+// Components should use these instead of destructuring the full store
+// to avoid re-rendering when unrelated state changes.
+
+export const useFilters = () => useAppStore((s) => s.filters);
+export const useSetFilters = () => useAppStore((s) => s.setFilters);
+export const useResetFilters = () => useAppStore((s) => s.resetFilters);
+
+export const useSidebarOpen = () => useAppStore((s) => s.sidebarOpen);
+export const useSetSidebarOpen = () => useAppStore((s) => s.setSidebarOpen);
+
+export const useFavorites = () => useAppStore((s) => s.favorites);
+export const useToggleFavorite = () => useAppStore((s) => s.toggleFavorite);
+export const useSetFavorites = () => useAppStore((s) => s.setFavorites);
+
+export const useLastImport = () => useAppStore((s) => s.lastImport);
+export const useSetLastImport = () => useAppStore((s) => s.setLastImport);

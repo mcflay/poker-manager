@@ -12,7 +12,7 @@
  */
 "use client";
 
-import { useAppStore } from "@/stores/app-store";
+import { useFilters, useSetFilters, useResetFilters } from "@/stores/app-store";
 import { FilterState } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +115,9 @@ function toggle(arr: string[], val: string): string[] {
 }
 
 export function FilterPanel({ sites, className }: FilterPanelProps) {
-  const { filters, setFilters, resetFilters } = useAppStore();
+  const filters = useFilters();
+  const setFilters = useSetFilters();
+  const resetFilters = useResetFilters();
 
   const activeCount = [
     filters.sites.length > 0,

@@ -36,6 +36,9 @@ if (!fs.existsSync(DB_DIR)) {
 const sqlite = new Database(DB_PATH);
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
+sqlite.pragma("synchronous = NORMAL");
+sqlite.pragma("cache_size = -20000");
+sqlite.pragma("temp_store = MEMORY");
 
 /** Drizzle ORM instance with typed schema — used for type-safe queries */
 export const db = drizzle(sqlite, { schema });
@@ -87,6 +90,10 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS idx_tournaments_site ON tournaments(site_id);
   CREATE INDEX IF NOT EXISTS idx_tournaments_buyin ON tournaments(buy_in);
   CREATE INDEX IF NOT EXISTS idx_tournaments_status ON tournaments(status);
+  CREATE INDEX IF NOT EXISTS idx_tournaments_name ON tournaments(name COLLATE NOCASE);
+
+  -- Composite index for the main tournament listing query
+  CREATE INDEX IF NOT EXISTS idx_tournaments_start_buyin ON tournaments(start_time, buy_in);
 
   CREATE TABLE IF NOT EXISTS results (
     id TEXT PRIMARY KEY,
@@ -103,6 +110,11 @@ sqlite.exec(`
     played_at TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE INDEX IF NOT EXISTS idx_results_tournament ON results(tournament_id);
+  CREATE INDEX IF NOT EXISTS idx_results_user ON results(user_id);
+  CREATE INDEX IF NOT EXISTS idx_results_played ON results(played_at);
+  CREATE INDEX IF NOT EXISTS idx_results_session ON results(session_id);
 
   CREATE TABLE IF NOT EXISTS filter_profiles (
     id TEXT PRIMARY KEY,
@@ -121,6 +133,12 @@ sqlite.exec(`
     notify_before INTEGER DEFAULT 15,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE INDEX IF NOT EXISTS idx_filter_profiles_user ON filter_profiles(user_id);
+
+  CREATE INDEX IF NOT EXISTS idx_favorites_tournament ON favorites(tournament_id);
+  CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
+  CREATE INDEX IF NOT EXISTS idx_favorites_user_tournament ON favorites(user_id, tournament_id);
 
   CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
@@ -198,6 +216,10 @@ sqlite.exec(`
     transacted_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE INDEX IF NOT EXISTS idx_bankroll_accounts_user ON bankroll_accounts(user_id);
+  CREATE INDEX IF NOT EXISTS idx_bankroll_transactions_account ON bankroll_transactions(account_id);
+  CREATE INDEX IF NOT EXISTS idx_bankroll_transactions_user ON bankroll_transactions(user_id);
+
   -- Notification tables
   CREATE TABLE IF NOT EXISTS notifications (
     id TEXT PRIMARY KEY,
@@ -211,6 +233,9 @@ sqlite.exec(`
     read_at TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+  CREATE INDEX IF NOT EXISTS idx_notifications_scheduled ON notifications(scheduled_for);
 
   CREATE TABLE IF NOT EXISTS notification_preferences (
     id TEXT PRIMARY KEY,
@@ -232,6 +257,8 @@ sqlite.exec(`
     fetched_at TEXT DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(base_currency, target_currency)
   );
+
+  CREATE INDEX IF NOT EXISTS idx_exchange_rates_pair ON exchange_rates(base_currency, target_currency);
 
   -- Seed default exchange rates (approximate, user can update)
   INSERT OR IGNORE INTO exchange_rates (id, base_currency, target_currency, rate, source) VALUES ('usd-eur', 'USD', 'EUR', 0.92, 'seed');
@@ -260,6 +287,10 @@ sqlite.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE INDEX IF NOT EXISTS idx_staking_deals_player ON staking_deals(player_id);
+  CREATE INDEX IF NOT EXISTS idx_staking_deals_result ON staking_deals(result_id);
+  CREATE INDEX IF NOT EXISTS idx_staking_deals_tournament ON staking_deals(tournament_id);
+
   CREATE TABLE IF NOT EXISTS staking_packages (
     id TEXT PRIMARY KEY,
     player_id TEXT,
@@ -269,6 +300,8 @@ sqlite.exec(`
     status TEXT DEFAULT 'active',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE INDEX IF NOT EXISTS idx_staking_packages_player ON staking_packages(player_id);
 
   -- Seed default poker sites (idempotent via INSERT OR IGNORE)
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('wptglobal', 'WPT Global', 'USD');

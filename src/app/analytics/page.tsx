@@ -8,11 +8,17 @@
  */
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { StatsCards } from "@/components/analytics/StatsCards";
-import { BankrollChart } from "@/components/analytics/BankrollChart";
-import { ROIBreakdown } from "@/components/analytics/ROIBreakdown";
+
+// Lazy-load chart components to avoid loading recharts in the main bundle
+const BankrollChart = lazy(() =>
+  import("@/components/analytics/BankrollChart").then((m) => ({ default: m.BankrollChart }))
+);
+const ROIBreakdown = lazy(() =>
+  import("@/components/analytics/ROIBreakdown").then((m) => ({ default: m.ROIBreakdown }))
+);
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AnalyticsSummary } from "@/lib/analytics/calculations";
@@ -130,26 +136,28 @@ export default function AnalyticsPage() {
             {/* Stats cards */}
             <StatsCards summary={data.summary} />
 
-            {/* Bankroll chart */}
-            <div className="p-4 rounded-lg border border-border bg-card">
-              <h3 className="text-sm font-semibold mb-3">Cumulative P&L</h3>
-              <BankrollChart data={data.timeline} />
-            </div>
-
-            {/* Breakdowns */}
-            <div className="grid md:grid-cols-2 gap-4">
+            {/* Bankroll chart (lazy-loaded with recharts) */}
+            <Suspense fallback={<div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Loading chart…</div>}>
               <div className="p-4 rounded-lg border border-border bg-card">
-                <ROIBreakdown data={data.bySite} title="By Site" />
+                <h3 className="text-sm font-semibold mb-3">Cumulative P&L</h3>
+                <BankrollChart data={data.timeline} />
               </div>
-              <div className="p-4 rounded-lg border border-border bg-card">
-                <ROIBreakdown data={data.byGameType} title="By Game Type" />
-              </div>
-            </div>
 
-            {/* Buy-in breakdown */}
-            <div className="p-4 rounded-lg border border-border bg-card">
-              <ROIBreakdown data={data.byBuyIn} title="By Buy-in Bracket" />
-            </div>
+              {/* Breakdowns */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg border border-border bg-card">
+                  <ROIBreakdown data={data.bySite} title="By Site" />
+                </div>
+                <div className="p-4 rounded-lg border border-border bg-card">
+                  <ROIBreakdown data={data.byGameType} title="By Game Type" />
+                </div>
+              </div>
+
+              {/* Buy-in breakdown */}
+              <div className="p-4 rounded-lg border border-border bg-card">
+                <ROIBreakdown data={data.byBuyIn} title="By Buy-in Bracket" />
+              </div>
+            </Suspense>
           </>
         )}
       </main>

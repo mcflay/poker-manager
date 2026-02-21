@@ -3,20 +3,27 @@
  *
  * Displays a filterable, sortable table of poker tournaments with:
  * - Collapsible sidebar with filter controls
- * - Search bar for tournament name filtering
+ * - Search bar with debounce for tournament name filtering
  * - Auto-refresh every 5 minutes
  * - Favorite toggle with optimistic updates
  * - Import button for loading scraper data
  *
- * All tournament data is fetched from /api/tournaments with query
- * parameters built from the current filter state in Zustand.
+ * Uses individual Zustand selectors to avoid unnecessary re-renders.
  *
  * @page /
  */
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useAppStore } from "@/stores/app-store";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import {
+  useFilters,
+  useSetFilters,
+  useSidebarOpen,
+  useSetSidebarOpen,
+  useFavorites,
+  useToggleFavorite,
+  useSetFavorites,
+} from "@/stores/app-store";
 import { Tournament, FilterState } from "@/lib/types";
 import { TournamentTable } from "@/components/tournament-table/TournamentTable";
 import { FilterPanel } from "@/components/filter-panel/FilterPanel";
@@ -73,14 +80,41 @@ function buildQueryString(filters: FilterState): string {
 }
 
 export default function SchedulePage() {
-  const { filters, setFilters, sidebarOpen, setSidebarOpen, favorites, toggleFavorite, setFavorites } =
-    useAppStore();
+  // Individual selectors — only re-render when the specific slice changes
+  const filters = useFilters();
+  const setFilters = useSetFilters();
+  const sidebarOpen = useSidebarOpen();
+  const setSidebarOpen = useSetSidebarOpen();
+  const favorites = useFavorites();
+  const toggleFavorite = useToggleFavorite();
+  const setFavorites = useSetFavorites();
+
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const autoRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Debounced search: local state for the input, sync to store after 300ms
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInput(value);
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = setTimeout(() => {
+        setFilters({ search: value });
+      }, 300);
+    },
+    [setFilters]
+  );
+
+  // Sync external filter.search changes back to local input
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
 
   const fetchTournaments = useCallback(
     async (showRefreshing = false) => {
@@ -109,21 +143,19 @@ export default function SchedulePage() {
     fetchTournaments();
   }, [fetchTournaments]);
 
-  // Load sites
+  // Load sites and favorites in parallel on mount
   useEffect(() => {
-    fetch("/api/sites")
-      .then((r) => r.json())
-      .then((d) => setSites(d.sites || []))
-      .catch(() => {});
-  }, []);
-
-  // Load favorites
-  useEffect(() => {
-    fetch("/api/favorites")
-      .then((r) => r.json())
-      .then((d) => setFavorites(d.favorites || []))
-      .catch(() => {});
-  }, []);
+    Promise.all([
+      fetch("/api/sites")
+        .then((r) => r.json())
+        .then((d) => setSites(d.sites || []))
+        .catch(() => {}),
+      fetch("/api/favorites")
+        .then((r) => r.json())
+        .then((d) => setFavorites(d.favorites || []))
+        .catch(() => {}),
+    ]);
+  }, [setFavorites]);
 
   // Auto-refresh every 5 minutes
   useEffect(() => {
@@ -135,26 +167,35 @@ export default function SchedulePage() {
     };
   }, [fetchTournaments]);
 
-  const handleToggleFavorite = async (id: string) => {
-    toggleFavorite(id);
-    try {
-      const res = await fetch("/api/favorites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tournamentId: id }),
-      });
-      const data = await res.json();
-      toast.success(data.favorited ? "Added to favorites" : "Removed from favorites");
-    } catch {
-      toggleFavorite(id); // revert
-      toast.error("Failed to update favorites");
-    }
-  };
+  // Stable callback ref — doesn't change between renders
+  const handleToggleFavorite = useCallback(
+    async (id: string) => {
+      toggleFavorite(id);
+      try {
+        const res = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tournamentId: id }),
+        });
+        const data = await res.json();
+        toast.success(data.favorited ? "Added to favorites" : "Removed from favorites");
+      } catch {
+        toggleFavorite(id); // revert
+        toast.error("Failed to update favorites");
+      }
+    },
+    [toggleFavorite]
+  );
 
-  const upcomingCount = tournaments.filter((t) => {
-    const diff = new Date(t.startTime).getTime() - Date.now();
-    return diff > 0 && diff < 60 * 60 * 1000;
-  }).length;
+  // Memoized upcoming count — only recomputes when tournaments change
+  const upcomingCount = useMemo(() => {
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+    return tournaments.filter((t) => {
+      const diff = new Date(t.startTime).getTime() - now;
+      return diff > 0 && diff < oneHour;
+    }).length;
+  }, [tournaments]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -226,12 +267,12 @@ export default function SchedulePage() {
             Staking
           </Link>
 
-          {/* Search */}
+          {/* Debounced Search */}
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              value={filters.search}
-              onChange={(e) => setFilters({ search: e.target.value })}
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search tournaments…"
               className="pl-8 h-8 text-sm bg-background"
             />

@@ -6,10 +6,8 @@
  * tournament type, status, name search, guarantee minimum, time window,
  * and favorites-only mode.
  *
- * Uses raw SQL (via better-sqlite3) for the dynamic WHERE clause since
- * Drizzle ORM's query builder doesn't support this pattern cleanly.
- * Results are joined with sites, results, and favorites tables.
- * Favorites join is scoped to the current authenticated user.
+ * Uses EXISTS subqueries (instead of JOINs) for results and favorites
+ * to avoid Cartesian product when a tournament has multiple results.
  *
  * @endpoint GET /api/tournaments
  * @returns {{ tournaments: Tournament[], total: number }}
@@ -37,26 +35,24 @@ export async function GET(req: NextRequest) {
   const timeWindowHours = searchParams.get("timeWindowHours");
   const favoritesOnly = searchParams.get("favoritesOnly") === "true";
 
-  // Scope favorites join to the current user (or anonymous with NULL user_id)
-  const favJoinCondition = userId
-    ? "f.tournament_id = t.id AND f.user_id = ?"
-    : "f.tournament_id = t.id AND f.user_id IS NULL";
+  // Build EXISTS subquery for favorites scoped to user
+  const favExistsCondition = userId
+    ? "EXISTS (SELECT 1 FROM favorites f WHERE f.tournament_id = t.id AND f.user_id = ?)"
+    : "EXISTS (SELECT 1 FROM favorites f WHERE f.tournament_id = t.id AND f.user_id IS NULL)";
 
   let query = `
     SELECT
       t.*,
       s.name as site_name,
-      CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END as has_result,
-      CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as is_favorite
+      EXISTS (SELECT 1 FROM results r WHERE r.tournament_id = t.id) as has_result,
+      (${favExistsCondition}) as is_favorite
     FROM tournaments t
     LEFT JOIN sites s ON t.site_id = s.id
-    LEFT JOIN results r ON r.tournament_id = t.id
-    LEFT JOIN favorites f ON ${favJoinCondition}
     WHERE 1=1
   `;
   const params: (string | number)[] = [];
 
-  // Add user_id param for the favorites join when authenticated
+  // Add user_id param for the favorites EXISTS subquery when authenticated
   if (userId) {
     params.push(userId);
   }
@@ -111,7 +107,10 @@ export async function GET(req: NextRequest) {
     params.push(cutoff);
   }
   if (favoritesOnly) {
-    query += " AND f.id IS NOT NULL";
+    query += ` AND (${favExistsCondition})`;
+    if (userId) {
+      params.push(userId);
+    }
   }
 
   query += " ORDER BY t.start_time ASC, t.buy_in ASC LIMIT 2000";

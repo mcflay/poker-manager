@@ -6,12 +6,10 @@
  * (with game type/structure badges), Buy-in (with speed badge), Guarantee,
  * Status badge, and Result trophy icon.
  *
- * Features:
- * - Column sorting (start time, buy-in, guarantee)
- * - Favorite highlighting (yellow background for starred tournaments)
- * - Countdown timer showing time until tournament starts
- * - Color-coded status and speed badges
- * - Loading and empty states
+ * Performance optimizations:
+ * - StatusBadge/SpeedBadge lookup maps hoisted to module scope
+ * - Column definition only depends on a stable onToggleFavorite ref
+ * - Row data enrichment memoized on [data, favSet]
  *
  * @component TournamentTable
  */
@@ -21,26 +19,21 @@ import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
-  getFilteredRowModel,
   flexRender,
   createColumnHelper,
   SortingState,
 } from "@tanstack/react-table";
 import { Tournament } from "@/lib/types";
-import { useState, useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { formatInTimeZone } from "date-fns-tz";
+import { useState, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { formatInTimeZone } from "date-fns-tz";
 import {
   Star,
-  StarOff,
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
   Trophy,
 } from "lucide-react";
-import { toast } from "sonner";
 
 const col = createColumnHelper<Tournament>();
 
@@ -77,16 +70,25 @@ function timeUntil(iso: string): { text: string; urgent: boolean } {
   return { text: `${hours}h ${rem}m`, urgent: false };
 }
 
+// ── Hoisted constant lookup maps (avoid recreating on every render) ──
+
+const STATUS_MAP: Record<string, { label: string; cls: string }> = {
+  scheduled: { label: "Soon", cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+  registering: { label: "Reg Open", cls: "bg-green-500/20 text-green-400 border-green-500/30" },
+  late_reg: { label: "Late Reg", cls: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
+  running: { label: "Running", cls: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+  completed: { label: "Done", cls: "bg-muted text-muted-foreground border-muted" },
+  cancelled: { label: "Cancelled", cls: "bg-red-500/20 text-red-400 border-red-500/30" },
+};
+
+const SPEED_MAP: Record<string, string> = {
+  hyper: "bg-red-500/15 text-red-400",
+  turbo: "bg-orange-500/15 text-orange-400",
+  deep: "bg-cyan-500/15 text-cyan-400",
+};
+
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    scheduled: { label: "Soon", cls: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-    registering: { label: "Reg Open", cls: "bg-green-500/20 text-green-400 border-green-500/30" },
-    late_reg: { label: "Late Reg", cls: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
-    running: { label: "Running", cls: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
-    completed: { label: "Done", cls: "bg-muted text-muted-foreground border-muted" },
-    cancelled: { label: "Cancelled", cls: "bg-red-500/20 text-red-400 border-red-500/30" },
-  };
-  const { label, cls } = map[status] ?? { label: status, cls: "" };
+  const { label, cls } = STATUS_MAP[status] ?? { label: status, cls: "" };
   return (
     <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border", cls)}>
       {label}
@@ -96,13 +98,8 @@ function StatusBadge({ status }: { status: string }) {
 
 function SpeedBadge({ speed }: { speed: string }) {
   if (!speed || speed === "regular") return null;
-  const map: Record<string, string> = {
-    hyper: "bg-red-500/15 text-red-400",
-    turbo: "bg-orange-500/15 text-orange-400",
-    deep: "bg-cyan-500/15 text-cyan-400",
-  };
   return (
-    <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium", map[speed] || "")}>
+    <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium", SPEED_MAP[speed] || "")}>
       {speed}
     </span>
   );
@@ -130,6 +127,10 @@ export function TournamentTable({
     [data, favSet]
   );
 
+  // Use a ref so columns never re-create due to callback identity changes
+  const onToggleRef = useRef(onToggleFavorite);
+  onToggleRef.current = onToggleFavorite;
+
   const columns = useMemo(
     () => [
       col.display({
@@ -140,7 +141,7 @@ export function TournamentTable({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onToggleFavorite(row.original.id);
+              onToggleRef.current(row.original.id);
             }}
             className="text-muted-foreground hover:text-yellow-400 transition-colors p-1"
           >
@@ -239,7 +240,7 @@ export function TournamentTable({
           ) : null,
       }),
     ],
-    [onToggleFavorite]
+    [] // columns are now stable — onToggleFavorite accessed via ref
   );
 
   const table = useReactTable({
