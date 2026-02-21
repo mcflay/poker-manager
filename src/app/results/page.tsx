@@ -17,6 +17,7 @@ import { BulkResultImport } from "@/components/results/BulkResultImport";
 import { SessionManager } from "@/components/results/SessionManager";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Button } from "@/components/ui/button";
+import { ExportButton } from "@/components/export/ExportButton";
 import { Spade, Plus, X, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -99,6 +100,7 @@ export default function ResultsPage() {
           <h1 className="text-lg font-bold">Results</h1>
 
           <div className="ml-auto flex items-center gap-2">
+            <ExportButton endpoint="/api/export/results" filename="results" />
             <BulkResultImport onImported={fetchResults} />
             <Button
               size="sm"
