@@ -22,6 +22,7 @@ import { TournamentTable } from "@/components/tournament-table/TournamentTable";
 import { FilterPanel } from "@/components/filter-panel/FilterPanel";
 import { ImportButton } from "@/components/import-wizard/ImportButton";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -257,6 +258,7 @@ export default function SchedulePage() {
               <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
             </Button>
             <ImportButton onImported={() => fetchTournaments(true)} />
+            <NotificationBell />
             <UserMenu />
           </div>
         </header>

@@ -198,6 +198,30 @@ sqlite.exec(`
     transacted_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Notification tables
+  CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    related_id TEXT,
+    scheduled_for TEXT,
+    sent_at TEXT,
+    read_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS notification_preferences (
+    id TEXT PRIMARY KEY,
+    user_id TEXT UNIQUE,
+    enable_browser INTEGER DEFAULT 0,
+    reminder_minutes_before INTEGER DEFAULT 15,
+    enable_daily_digest INTEGER DEFAULT 0,
+    digest_time TEXT DEFAULT '09:00',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
   -- Seed default poker sites (idempotent via INSERT OR IGNORE)
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('wptglobal', 'WPT Global', 'USD');
   INSERT OR IGNORE INTO sites (id, name, currency) VALUES ('pokerstars', 'PokerStars', 'USD');
