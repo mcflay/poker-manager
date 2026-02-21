@@ -166,6 +166,47 @@ export interface ImportSummary {
   skipped: number;
 }
 
+/** A result enriched with tournament details for display */
+export interface ResultWithTournament extends Result {
+  tournamentName: string;
+  siteName: string;
+  siteId: string;
+  gameType: string;
+  buyIn: number;
+  guarantee: number;
+  startTime: string;
+  currency: string;
+}
+
+/** A playing session — groups multiple tournament results */
+export interface Session {
+  id: string;
+  name?: string | null;
+  date: string;
+  notes?: string | null;
+  userId?: string | null;
+  createdAt: string;
+  /** Computed fields from aggregated results */
+  resultCount?: number;
+  totalInvested?: number;
+  totalPayout?: number;
+  netResult?: number;
+}
+
+/** Form data for creating/editing a result */
+export interface ResultFormData {
+  tournamentId: string;
+  entries: number;
+  totalInvested: number;
+  finishPosition?: number | null;
+  totalEntriesAtFinish?: number | null;
+  payout: number;
+  bountiesWon: number;
+  notes?: string;
+  sessionId?: string | null;
+  playedAt?: string | null;
+}
+
 /** Shape of the WPT Global scraper JSON output */
 export interface WptScraperOutput {
   /** ISO 8601 timestamp when the scrape was performed */

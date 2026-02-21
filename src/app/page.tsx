@@ -33,7 +33,9 @@ import {
   PanelLeft,
   Spade,
   Clock,
+  Trophy,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 interface Site {
@@ -178,11 +180,18 @@ export default function SchedulePage() {
             )}
           </button>
 
-          {/* Logo */}
+          {/* Logo & Nav */}
           <div className="flex items-center gap-2 mr-2">
             <Spade className="h-5 w-5 text-primary" />
             <span className="font-bold text-sm tracking-tight">PokerSchedule</span>
           </div>
+          <Link
+            href="/results"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <Trophy className="h-3.5 w-3.5" />
+            Results
+          </Link>
 
           {/* Search */}
           <div className="relative flex-1 max-w-sm">
