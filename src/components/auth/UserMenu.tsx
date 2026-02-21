@@ -10,7 +10,8 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Settings } from "lucide-react";
+import Link from "next/link";
 
 export function UserMenu() {
   const { data: session } = useSession();
@@ -31,6 +32,11 @@ export function UserMenu() {
       <span className="text-xs text-muted-foreground hidden lg:block">
         {session.user.name || session.user.email}
       </span>
+      <Link href="/settings">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Settings className="h-3.5 w-3.5" />
+        </Button>
+      </Link>
       <Button
         variant="ghost"
         size="sm"
