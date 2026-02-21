@@ -71,6 +71,16 @@ export type TournamentStatus =
   | "completed"
   | "cancelled";
 
+/** Extended favorite info with color, priority, and category */
+export interface FavoriteInfo {
+  id: string;
+  tournamentId: string;
+  color?: string | null;
+  priority: number;
+  notes?: string | null;
+  category?: string | null;
+}
+
 /** A user's result for a played tournament */
 export interface Result {
   id: string;

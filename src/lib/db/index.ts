@@ -193,6 +193,9 @@ const alterStatements = [
   "ALTER TABLE filter_profiles ADD COLUMN user_id TEXT",
   "ALTER TABLE results ADD COLUMN user_id TEXT",
   "ALTER TABLE sessions ADD COLUMN user_id TEXT",
+  "ALTER TABLE favorites ADD COLUMN priority INTEGER DEFAULT 0",
+  "ALTER TABLE favorites ADD COLUMN notes TEXT",
+  "ALTER TABLE favorites ADD COLUMN category TEXT",
 ];
 
 for (const stmt of alterStatements) {

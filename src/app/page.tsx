@@ -34,6 +34,7 @@ import {
   Spade,
   Clock,
   Trophy,
+  CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -191,6 +192,13 @@ export default function SchedulePage() {
           >
             <Trophy className="h-3.5 w-3.5" />
             Results
+          </Link>
+          <Link
+            href="/schedule"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            My Schedule
           </Link>
 
           {/* Search */}
