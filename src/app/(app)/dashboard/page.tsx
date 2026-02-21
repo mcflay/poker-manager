@@ -10,7 +10,7 @@
  *
  * Uses individual Zustand selectors to avoid unnecessary re-renders.
  *
- * @page /
+ * @page /dashboard
  */
 "use client";
 

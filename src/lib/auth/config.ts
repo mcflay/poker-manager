@@ -5,6 +5,10 @@
  * with bcrypt password hashing. JWT strategy is used for sessions
  * since SQLite doesn't scale well with database session lookups.
  *
+ * The config is split: `authConfig` (edge-compatible, no DB imports)
+ * is used by middleware, while `auth`/`signIn`/`signOut` (full config
+ * with Credentials provider) is used by server-side code.
+ *
  * @module auth/config
  */
 
@@ -12,6 +16,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { sqlite } from "@/lib/db";
+import { authConfig } from "./edge-config";
 
 interface DbUser {
   id: string;
@@ -23,6 +28,7 @@ interface DbUser {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       name: "credentials",
@@ -60,26 +66,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
-  callbacks: {
-    /** Attach userId to the JWT token */
-    jwt({ token, user }) {
-      if (user?.id) {
-        token.id = user.id;
-      }
-      return token;
-    },
-    /** Expose userId on the session object */
-    session({ session, token }) {
-      if (token?.id && session.user) {
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-  },
 });

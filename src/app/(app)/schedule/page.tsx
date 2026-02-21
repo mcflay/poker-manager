@@ -100,7 +100,7 @@ export default function MySchedulePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5 text-muted-foreground" />
           <Spade className="h-4 w-4 text-primary" />
         </Link>
@@ -134,7 +134,7 @@ export default function MySchedulePage() {
             <p className="text-sm">No favorites yet</p>
             <p className="text-xs">
               Star tournaments on the{" "}
-              <Link href="/" className="text-primary hover:underline">
+              <Link href="/dashboard" className="text-primary hover:underline">
                 schedule page
               </Link>{" "}
               to see them here

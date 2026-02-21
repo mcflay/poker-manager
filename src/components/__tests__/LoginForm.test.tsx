@@ -92,7 +92,7 @@ describe("LoginForm", () => {
     await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
-    expect(mockPush).toHaveBeenCalledWith("/");
+    expect(mockPush).toHaveBeenCalledWith("/dashboard");
     expect(mockRefresh).toHaveBeenCalled();
   });
 

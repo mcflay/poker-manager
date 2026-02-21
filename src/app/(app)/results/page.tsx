@@ -77,7 +77,7 @@ export default function ResultsPage() {
       {/* Sessions sidebar */}
       <div className="w-56 shrink-0 border-r border-border bg-card overflow-y-auto">
         <div className="px-4 py-3 border-b border-border">
-          <Link href="/" className="flex items-center gap-2 mb-3">
+          <Link href="/dashboard" className="flex items-center gap-2 mb-3">
             <ArrowLeft className="h-3.5 w-3.5 text-muted-foreground" />
             <Spade className="h-4 w-4 text-primary" />
             <span className="font-bold text-sm">Schedule</span>
