@@ -35,6 +35,7 @@ import {
   Clock,
   Trophy,
   CalendarDays,
+  BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -199,6 +200,13 @@ export default function SchedulePage() {
           >
             <CalendarDays className="h-3.5 w-3.5" />
             My Schedule
+          </Link>
+          <Link
+            href="/analytics"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            Analytics
           </Link>
 
           {/* Search */}
