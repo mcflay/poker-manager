@@ -53,8 +53,7 @@ describe("GET /api/sessions", () => {
       all: vi.fn().mockReturnValue(mockRows),
     });
 
-    const req = createRequest("http://localhost:3000/api/sessions");
-    const res = await GET(req as any);
+    const res = await GET();
     const data = await res.json();
 
     expect(res.status).toBe(200);

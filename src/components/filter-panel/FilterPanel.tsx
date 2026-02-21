@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { X, ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
+import { SavedProfiles } from "./SavedProfiles";
 
 interface Site {
   id: string;
@@ -152,6 +153,11 @@ export function FilterPanel({ sites, className }: FilterPanelProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-0">
+        {/* Saved Profiles */}
+        <Section title="Saved Profiles" defaultOpen={false}>
+          <SavedProfiles />
+        </Section>
+
         {/* Time Window */}
         <Section title="Time Window">
           <div className="flex flex-wrap gap-1.5">
